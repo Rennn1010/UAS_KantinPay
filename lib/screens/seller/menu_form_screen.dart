@@ -14,11 +14,7 @@ class MenuFormScreen extends StatefulWidget {
   final String sellerId;
   final MenuModel? existingMenu;
 
-  const MenuFormScreen({
-    super.key,
-    required this.sellerId,
-    this.existingMenu,
-  });
+  const MenuFormScreen({super.key, required this.sellerId, this.existingMenu});
 
   bool get isEditMode => existingMenu != null;
 
@@ -60,7 +56,10 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
     if (picked != null) {
       setState(() => _pickedImage = File(picked.path));
     }
@@ -113,7 +112,9 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessage ?? 'Gagal menyimpan menu')),
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Gagal menyimpan menu'),
+        ),
       );
     }
   }
@@ -123,7 +124,9 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
     final existing = widget.existingMenu;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.isEditMode ? 'Edit Menu' : 'Tambah Menu')),
+      appBar: AppBar(
+        title: Text(widget.isEditMode ? 'Edit Menu' : 'Tambah Menu'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -139,43 +142,57 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                     color: Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: _pickedImage != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.file(_pickedImage!, fit: BoxFit.cover),
-                        )
-                      : (existing?.imageUrl != null
+                  child:
+                      _pickedImage != null
                           ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(existing!.imageUrl!, fit: BoxFit.cover),
-                            )
-                          : const Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_a_photo_outlined, size: 32),
-                                  SizedBox(height: 8),
-                                  Text('Tambah Foto Menu'),
-                                ],
-                              ),
-                            )),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(_pickedImage!, fit: BoxFit.cover),
+                          )
+                          : (existing?.imageUrl != null
+                              ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  existing!.imageUrl!,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                              : const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_a_photo_outlined, size: 32),
+                                    SizedBox(height: 8),
+                                    Text('Tambah Foto Menu'),
+                                  ],
+                                ),
+                              )),
                 ),
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Nama Menu'),
-                validator: (value) =>
-                    (value == null || value.trim().isEmpty) ? 'Nama wajib diisi' : null,
+                validator:
+                    (value) =>
+                        (value == null || value.trim().isEmpty)
+                            ? 'Nama wajib diisi'
+                            : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                initialValue: _selectedCategoryId,
+                value: _selectedCategoryId,
                 decoration: const InputDecoration(labelText: 'Kategori'),
-                items: _categories
-                    .map((cat) => DropdownMenuItem(value: cat.id, child: Text(cat.name)))
-                    .toList(),
-                onChanged: (value) => setState(() => _selectedCategoryId = value),
+                items:
+                    _categories
+                        .map(
+                          (cat) => DropdownMenuItem(
+                            value: cat.id,
+                            child: Text(cat.name),
+                          ),
+                        )
+                        .toList(),
+                onChanged:
+                    (value) => setState(() => _selectedCategoryId = value),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -190,10 +207,14 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                     child: TextFormField(
                       controller: _priceController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Harga (Rp)'),
+                      decoration: const InputDecoration(
+                        labelText: 'Harga (Rp)',
+                      ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Wajib diisi';
-                        if (double.tryParse(value) == null) return 'Angka tidak valid';
+                        if (value == null || value.isEmpty)
+                          return 'Wajib diisi';
+                        if (double.tryParse(value) == null)
+                          return 'Angka tidak valid';
                         return null;
                       },
                     ),
@@ -205,8 +226,10 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(labelText: 'Stok'),
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Wajib diisi';
-                        if (int.tryParse(value) == null) return 'Angka tidak valid';
+                        if (value == null || value.isEmpty)
+                          return 'Wajib diisi';
+                        if (int.tryParse(value) == null)
+                          return 'Angka tidak valid';
                         return null;
                       },
                     ),
@@ -218,14 +241,21 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                 builder: (context, provider, _) {
                   return ElevatedButton(
                     onPressed: provider.isLoading ? null : _submit,
-                    style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                    child: provider.isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(widget.isEditMode ? 'Simpan Perubahan' : 'Tambah Menu'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    child:
+                        provider.isLoading
+                            ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : Text(
+                              widget.isEditMode
+                                  ? 'Simpan Perubahan'
+                                  : 'Tambah Menu',
+                            ),
                   );
                 },
               ),

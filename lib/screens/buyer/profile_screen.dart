@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/profile_service.dart';
+import '../../models/user_model.dart';
 
 /// Dipakai oleh pembeli maupun penjual — kontennya sama, hanya tujuan
 /// navigasi setelah logout yang berbeda (keduanya kembali ke /login).
@@ -41,7 +42,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
     if (picked != null) {
       setState(() => _pickedImage = File(picked.path));
     }
@@ -56,7 +60,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     String? uploadedImageUrl;
     if (_pickedImage != null) {
-      uploadedImageUrl = await _profileService.uploadProfileImage(userId, _pickedImage!);
+      uploadedImageUrl = await _profileService.uploadProfileImage(
+        userId,
+        _pickedImage!,
+      );
     }
 
     final success = await authProvider.updateProfile(
@@ -76,9 +83,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(success
-            ? 'Profil berhasil diperbarui'
-            : authProvider.errorMessage ?? 'Gagal menyimpan'),
+        content: Text(
+          success
+              ? 'Profil berhasil diperbarui'
+              : authProvider.errorMessage ?? 'Gagal menyimpan',
+        ),
       ),
     );
   }
@@ -86,14 +95,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _confirmLogout() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Keluar'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun ini?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Keluar')),
-        ],
-      ),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Keluar'),
+            content: const Text(
+              'Apakah Anda yakin ingin keluar dari akun ini?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Batal'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Keluar'),
+              ),
+            ],
+          ),
     );
 
     if (confirmed == true && mounted) {
@@ -136,14 +154,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     CircleAvatar(
                       radius: 56,
                       backgroundColor: Colors.grey.shade200,
-                      backgroundImage: _pickedImage != null
-                          ? FileImage(_pickedImage!)
-                          : (user.profileImageUrl != null
-                              ? NetworkImage(user.profileImageUrl!) as ImageProvider
-                              : null),
-                      child: _pickedImage == null && user.profileImageUrl == null
-                          ? const Icon(Icons.person, size: 56, color: Colors.grey)
-                          : null,
+                      backgroundImage:
+                          _pickedImage != null
+                              ? FileImage(_pickedImage!)
+                              : (user.profileImageUrl != null
+                                  ? NetworkImage(user.profileImageUrl!)
+                                      as ImageProvider
+                                  : null),
+                      child:
+                          _pickedImage == null && user.profileImageUrl == null
+                              ? const Icon(
+                                Icons.person,
+                                size: 56,
+                                color: Colors.grey,
+                              )
+                              : null,
                     ),
                     if (_isEditing)
                       Positioned(
@@ -151,8 +176,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         right: 0,
                         child: CircleAvatar(
                           radius: 16,
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                   ],
@@ -166,8 +196,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   labelText: 'Nama Lengkap',
                   prefixIcon: Icon(Icons.person_outline),
                 ),
-                validator: (value) =>
-                    (value == null || value.trim().isEmpty) ? 'Nama wajib diisi' : null,
+                validator:
+                    (value) =>
+                        (value == null || value.trim().isEmpty)
+                            ? 'Nama wajib diisi'
+                            : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -192,7 +225,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Chip(
-                  label: Text(user.role.value == 'penjual' ? 'Penjual' : 'Pembeli'),
+                  label: Text(
+                    user.role.value == 'penjual' ? 'Penjual' : 'Pembeli',
+                  ),
                   avatar: const Icon(Icons.badge_outlined, size: 18),
                 ),
               ),
@@ -200,33 +235,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
               if (_isEditing) ...[
                 ElevatedButton(
                   onPressed: _isSaving ? null : _saveProfile,
-                  style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                  child: _isSaving
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Simpan Perubahan'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  child:
+                      _isSaving
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Text('Simpan Perubahan'),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton(
-                  onPressed: _isSaving
-                      ? null
-                      : () => setState(() {
+                  onPressed:
+                      _isSaving
+                          ? null
+                          : () => setState(() {
                             _isEditing = false;
                             _pickedImage = null;
                             _nameController.text = user.fullName;
                             _phoneController.text = user.phone ?? '';
                           }),
-                  style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
                   child: const Text('Batal'),
                 ),
               ] else
                 OutlinedButton.icon(
                   onPressed: _confirmLogout,
                   icon: const Icon(Icons.logout, color: Colors.red),
-                  label: const Text('Keluar', style: TextStyle(color: Colors.red)),
+                  label: const Text(
+                    'Keluar',
+                    style: TextStyle(color: Colors.red),
+                  ),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                     side: const BorderSide(color: Colors.red),

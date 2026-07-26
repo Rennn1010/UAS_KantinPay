@@ -4,11 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Bisa didapat dari Supabase Dashboard -> Project Settings -> API.
 class SupabaseConfig {
   static const String supabaseUrl = 'https://igtxfoxabbczqqkkrzux.supabase.co';
-  static const String supabaseAnonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndHhmb3hhYmJjenFxa2tyenV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxODIzNjIsImV4cCI6MjA5OTc1ODM2Mn0.DszPhtn9NOg2y3Z5QHIeOOTkMb3WLWNs1u5eEZBD7s8';
+  static const String supabaseAnonKey = 'sb_publishable_9aRcSkDpqaI2bOiGT9k0pw_LRmk-tn-';
 
   static Future<void> initialize() async {
-    await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+    await Supabase.initialize(
+      url: supabaseUrl,
+      publishableKey: supabaseAnonKey,
+    );
   }
 }
 

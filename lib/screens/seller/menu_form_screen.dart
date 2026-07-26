@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -33,7 +33,8 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
   final MenuService _menuService = MenuService();
   List<CategoryModel> _categories = [];
   String? _selectedCategoryId;
-  File? _pickedImage;
+  Uint8List? _pickedImageBytes;
+  String? _pickedImageName;
 
   @override
   void initState() {
@@ -61,7 +62,11 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
       imageQuality: 85,
     );
     if (picked != null) {
-      setState(() => _pickedImage = File(picked.path));
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _pickedImageBytes = bytes;
+        _pickedImageName = picked.name;
+      });
     }
   }
 
@@ -91,7 +96,8 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
         description: _descriptionController.text.trim(),
         price: price,
         stock: stock,
-        imageFile: _pickedImage,
+        imageBytes: _pickedImageBytes,
+        imageName: _pickedImageName,
         existingImageUrl: widget.existingMenu!.imageUrl,
       );
     } else {
@@ -102,7 +108,8 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
         description: _descriptionController.text.trim(),
         price: price,
         stock: stock,
-        imageFile: _pickedImage,
+        imageBytes: _pickedImageBytes,
+        imageName: _pickedImageName,
       );
     }
 
@@ -143,10 +150,13 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child:
-                      _pickedImage != null
+                      _pickedImageBytes != null
                           ? ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.file(_pickedImage!, fit: BoxFit.cover),
+                            child: Image.memory(
+                              _pickedImageBytes!,
+                              fit: BoxFit.cover,
+                            ),
                           )
                           : (existing?.imageUrl != null
                               ? ClipRRect(

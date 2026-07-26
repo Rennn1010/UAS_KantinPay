@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/menu_model.dart';
 
@@ -7,6 +7,22 @@ import '../models/menu_model.dart';
 class SellerMenuService {
   final SupabaseClient _client = Supabase.instance.client;
   static const String _bucket = 'menu-images';
+
+  String _contentTypeFor(String ext) {
+    switch (ext.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      default:
+        return 'application/octet-stream';
+    }
+  }
 
   /// Ambil semua menu milik penjual (termasuk yang nonaktif/habis stok)
   Future<List<MenuModel>> getMenusBySeller(String sellerId) async {
@@ -21,14 +37,25 @@ class SellerMenuService {
         .toList();
   }
 
-  /// Upload foto menu ke storage, mengembalikan public URL
-  Future<String> _uploadImage(String sellerId, File imageFile) async {
-    final fileExt = imageFile.path.split('.').last;
-    final fileName =
-        '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+  /// Upload foto menu ke storage, mengembalikan public URL.
+  /// Pakai uploadBinary (bytes) alih-alih upload(File) agar kompatibel
+  /// dengan Flutter Web, di mana dart:io File tidak tersedia.
+  Future<String> _uploadImage(
+    String sellerId,
+    Uint8List imageBytes,
+    String originalFileName,
+  ) async {
+    final fileExt = originalFileName.split('.').last;
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
     final storagePath = '$sellerId/$fileName';
 
-    await _client.storage.from(_bucket).upload(storagePath, imageFile);
+    await _client.storage
+        .from(_bucket)
+        .uploadBinary(
+          storagePath,
+          imageBytes,
+          fileOptions: FileOptions(contentType: _contentTypeFor(fileExt)),
+        );
     return _client.storage.from(_bucket).getPublicUrl(storagePath);
   }
 
@@ -40,11 +67,12 @@ class SellerMenuService {
     String? description,
     required double price,
     required int stock,
-    File? imageFile,
+    Uint8List? imageBytes,
+    String? imageName,
   }) async {
     String? imageUrl;
-    if (imageFile != null) {
-      imageUrl = await _uploadImage(sellerId, imageFile);
+    if (imageBytes != null && imageName != null) {
+      imageUrl = await _uploadImage(sellerId, imageBytes, imageName);
     }
 
     final response = await _client
@@ -74,12 +102,13 @@ class SellerMenuService {
     String? description,
     required double price,
     required int stock,
-    File? imageFile,
+    Uint8List? imageBytes,
+    String? imageName,
     String? existingImageUrl,
   }) async {
     String? imageUrl = existingImageUrl;
-    if (imageFile != null) {
-      imageUrl = await _uploadImage(sellerId, imageFile);
+    if (imageBytes != null && imageName != null) {
+      imageUrl = await _uploadImage(sellerId, imageBytes, imageName);
     }
 
     final response = await _client

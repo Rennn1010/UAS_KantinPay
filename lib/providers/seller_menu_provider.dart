@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/menu_model.dart';
 import '../services/seller_menu_service.dart';
@@ -38,7 +37,8 @@ class SellerMenuProvider extends ChangeNotifier {
     String? description,
     required double price,
     required int stock,
-    File? imageFile,
+    Uint8List? imageBytes,
+    String? imageName,
   }) async {
     _setLoading(true);
     _errorMessage = null;
@@ -50,7 +50,8 @@ class SellerMenuProvider extends ChangeNotifier {
         description: description,
         price: price,
         stock: stock,
-        imageFile: imageFile,
+        imageBytes: imageBytes,
+        imageName: imageName,
       );
       await loadMenus(sellerId);
       return true;
@@ -69,7 +70,8 @@ class SellerMenuProvider extends ChangeNotifier {
     String? description,
     required double price,
     required int stock,
-    File? imageFile,
+    Uint8List? imageBytes,
+    String? imageName,
     String? existingImageUrl,
   }) async {
     _setLoading(true);
@@ -83,7 +85,8 @@ class SellerMenuProvider extends ChangeNotifier {
         description: description,
         price: price,
         stock: stock,
-        imageFile: imageFile,
+        imageBytes: imageBytes,
+        imageName: imageName,
         existingImageUrl: existingImageUrl,
       );
       await loadMenus(sellerId);

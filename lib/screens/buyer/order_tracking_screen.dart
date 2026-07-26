@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/order_model.dart';
 import '../../providers/order_provider.dart';
 import '../../widgets/order_status_badge.dart';
+import 'payment_screen.dart';
 
 /// Menampilkan progres pesanan pembeli secara realtime:
 /// Menunggu Pembayaran -> Menunggu Verifikasi -> Diproses -> Siap Diambil -> Selesai
@@ -67,7 +68,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   children: [
                     Text(
                       order.orderNumber,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     OrderStatusBadge(status: order.status),
                   ],
@@ -76,7 +80,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 const SizedBox(height: 24),
                 _buildTimeline(order.status),
                 const SizedBox(height: 24),
-                const Text('Item Pesanan', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Item Pesanan',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 8),
                 ...order.items.map(
                   (item) => Padding(
@@ -84,7 +91,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(child: Text('${item.menuName} x${item.quantity}')),
+                        Expanded(
+                          child: Text('${item.menuName} x${item.quantity}'),
+                        ),
                         Text('Rp ${item.subtotal.toStringAsFixed(0)}'),
                       ],
                     ),
@@ -94,13 +103,37 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Total',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     Text(
                       'Rp ${order.totalAmount.toStringAsFixed(0)}',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
+                if (order.status == OrderStatus.menungguPembayaran) ...[
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (_) => PaymentScreen(
+                                orderId: order.id,
+                                sellerId: order.sellerId,
+                              ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    child: const Text('Bayar Sekarang'),
+                  ),
+                ],
               ],
             ),
           );
@@ -148,9 +181,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     shape: BoxShape.circle,
                     color: isDone ? Colors.green : Colors.grey.shade300,
                   ),
-                  child: isDone
-                      ? const Icon(Icons.check, size: 16, color: Colors.white)
-                      : null,
+                  child:
+                      isDone
+                          ? const Icon(
+                            Icons.check,
+                            size: 16,
+                            color: Colors.white,
+                          )
+                          : null,
                 ),
                 if (!isLast)
                   Container(

@@ -50,7 +50,9 @@ class _PeakHourScreenState extends State<PeakHourScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -66,7 +68,10 @@ class _PeakHourScreenState extends State<PeakHourScreen> {
                         const SizedBox(height: 4),
                         Text(
                           '${busiest.hourLabel} · ${busiest.count} transaksi',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -85,7 +90,10 @@ class _PeakHourScreenState extends State<PeakHourScreen> {
                           child: Text(
                             item.hourLabel,
                             style: TextStyle(
-                              fontWeight: isBusiest ? FontWeight.bold : FontWeight.normal,
+                              fontWeight:
+                                  isBusiest
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                             ),
                           ),
                         ),
@@ -96,16 +104,21 @@ class _PeakHourScreenState extends State<PeakHourScreen> {
                               value: ratio,
                               minHeight: 16,
                               backgroundColor: Colors.grey.shade200,
-                              color: isBusiest
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                              color:
+                                  isBusiest
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.primary
+                                          .withValues(alpha: 0.4),
                             ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         SizedBox(
                           width: 32,
-                          child: Text('${item.count}', textAlign: TextAlign.end),
+                          child: Text(
+                            '${item.count}',
+                            textAlign: TextAlign.end,
+                          ),
                         ),
                       ],
                     ),

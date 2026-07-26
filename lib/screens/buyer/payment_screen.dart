@@ -71,12 +71,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
     setState(() => _selectedMethod = PaymentMethod.cod);
 
     final provider = context.read<PaymentProvider>();
-    await provider.createPayment(
+    final success = await provider.createPayment(
       orderId: widget.orderId,
       method: PaymentMethod.cod,
     );
 
     if (!mounted) return;
+
+    if (!success) {
+      setState(() => _selectedMethod = null);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(provider.errorMessage ?? 'Gagal memproses COD')),
+      );
+      return;
+    }
+
     Navigator.pushReplacementNamed(
       context,
       '/order-tracking',
@@ -102,8 +111,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       appBar: AppBar(title: const Text('Metode Pembayaran')),
       body: Consumer<PaymentProvider>(
         builder: (context, paymentProvider, _) {
-          final isConfirmed = paymentProvider.isWaitingVerification ||
-              paymentProvider.isPaid;
+          final isConfirmed =
+              paymentProvider.isWaitingVerification || paymentProvider.isPaid;
 
           // Jika penjual sudah verifikasi -> lanjut otomatis ke tracking
           if (paymentProvider.isPaid) {
@@ -144,9 +153,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   if (_loadingQris)
                     const Center(child: CircularProgressIndicator())
                   else if (_qrisImageUrl == null)
-                    const Center(
-                      child: Text('Penjual belum mengunggah QRIS'),
-                    )
+                    const Center(child: Text('Penjual belum mengunggah QRIS'))
                   else
                     QrisDisplayWidget(
                       qrisImageUrl: _qrisImageUrl!,

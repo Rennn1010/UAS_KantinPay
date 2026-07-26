@@ -40,12 +40,20 @@ class CartService {
   }
 
   /// Tambah menu ke keranjang. Jika menu sudah ada, tambahkan quantity-nya.
+  /// Total quantity (yang sudah ada + tambahan) divalidasi terhadap stok
+  /// menu saat ini, supaya pembeli tidak bisa menambah lebih banyak dari
+  /// stok yang tersedia meski menambahkannya lewat halaman detail menu
+  /// yang tidak tahu jumlah yang sudah ada di keranjang.
   Future<void> addItem({
     required String buyerId,
     required String menuId,
     int quantity = 1,
   }) async {
     final cartId = await _getOrCreateCartId(buyerId);
+
+    final menu =
+        await _client.from('menus').select('stock').eq('id', menuId).single();
+    final stock = (menu['stock'] as num).toInt();
 
     final existing = await _client
         .from('cart_items')
@@ -54,25 +62,52 @@ class CartService {
         .eq('menu_id', menuId)
         .maybeSingle();
 
+    final currentQuantity =
+        existing != null ? existing['quantity'] as int : 0;
+    final newQuantity = currentQuantity + quantity;
+
+    if (newQuantity > stock) {
+      throw Exception(
+        'Stok tidak mencukupi (tersisa $stock, sudah ada $currentQuantity di keranjang)',
+      );
+    }
+
     if (existing != null) {
-      await _client.from('cart_items').update({
-        'quantity': (existing['quantity'] as int) + quantity,
-      }).eq('id', existing['id']);
+      await _client
+          .from('cart_items')
+          .update({'quantity': newQuantity}).eq('id', existing['id']);
     } else {
       await _client.from('cart_items').insert({
         'cart_id': cartId,
         'menu_id': menuId,
-        'quantity': quantity,
+        'quantity': newQuantity,
       });
     }
   }
 
   /// Ubah jumlah item. Jika quantity <= 0, item dihapus.
+  /// Divalidasi terhadap stok terkini sebagai lapisan pengaman kedua,
+  /// berjaga-jaga jika data stok di UI sudah tidak sinkron (misalnya
+  /// penjual baru saja mengurangi stok saat pembeli sedang di keranjang).
   Future<void> updateQuantity(String cartItemId, int quantity) async {
     if (quantity <= 0) {
       await removeItem(cartItemId);
       return;
     }
+
+    final row = await _client
+        .from('cart_items')
+        .select('menus(stock)')
+        .eq('id', cartItemId)
+        .single();
+    final stock = ((row['menus'] as Map<String, dynamic>?)?['stock'] as num?)
+            ?.toInt() ??
+        0;
+
+    if (quantity > stock) {
+      throw Exception('Stok tidak mencukupi (tersisa $stock)');
+    }
+
     await _client
         .from('cart_items')
         .update({'quantity': quantity}).eq('id', cartItemId);

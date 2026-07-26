@@ -94,7 +94,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         ? null
                         : Theme.of(
                           context,
-                        ).colorScheme.primary.withOpacity(0.06),
+                        ).colorScheme.primary.withValues(alpha: 0.06),
                 child: ListTile(
                   onTap: () => _openNotification(notif),
                   leading: CircleAvatar(
@@ -103,7 +103,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             ? Colors.grey.shade200
                             : Theme.of(
                               context,
-                            ).colorScheme.primary.withOpacity(0.15),
+                            ).colorScheme.primary.withValues(alpha: 0.15),
                     child: Icon(
                       Icons.notifications_outlined,
                       color:

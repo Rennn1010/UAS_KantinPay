@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/seller_qris_model.dart';
 
@@ -7,6 +7,22 @@ import '../models/seller_qris_model.dart';
 class SellerQrisService {
   final SupabaseClient _client = Supabase.instance.client;
   static const String _bucket = 'qris-images';
+
+  String _contentTypeFor(String ext) {
+    switch (ext.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      default:
+        return 'application/octet-stream';
+    }
+  }
 
   /// Ambil data QRIS aktif milik penjual (untuk ditampilkan di halaman setting)
   Future<SellerQrisModel?> getSellerQris(String sellerId) async {
@@ -25,15 +41,22 @@ class SellerQrisService {
   /// Jika penjual sudah pernah upload sebelumnya, record lama akan di-update (bukan duplikat).
   Future<SellerQrisModel> uploadQrisImage({
     required String sellerId,
-    required File imageFile,
+    required Uint8List imageBytes,
+    required String imageName,
   }) async {
-    final fileExt = imageFile.path.split('.').last;
+    final fileExt = imageName.split('.').last;
     final fileName =
         'qris_$sellerId${DateTime.now().millisecondsSinceEpoch}.$fileExt';
     final storagePath = '$sellerId/$fileName';
 
-    // Upload ke Supabase Storage
-    await _client.storage.from(_bucket).upload(storagePath, imageFile);
+    // Upload ke Supabase Storage lewat bytes (kompatibel dengan Flutter Web)
+    await _client.storage
+        .from(_bucket)
+        .uploadBinary(
+          storagePath,
+          imageBytes,
+          fileOptions: FileOptions(contentType: _contentTypeFor(fileExt)),
+        );
 
     final publicUrl = _client.storage.from(_bucket).getPublicUrl(storagePath);
 

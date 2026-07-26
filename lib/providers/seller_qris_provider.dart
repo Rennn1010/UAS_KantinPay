@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/seller_qris_model.dart';
 import '../services/seller_qris_service.dart';
@@ -34,14 +33,16 @@ class SellerQrisProvider extends ChangeNotifier {
 
   Future<bool> uploadQris({
     required String sellerId,
-    required File imageFile,
+    required Uint8List imageBytes,
+    required String imageName,
   }) async {
     _setLoading(true);
     _errorMessage = null;
     try {
       _qris = await _service.uploadQrisImage(
         sellerId: sellerId,
-        imageFile: imageFile,
+        imageBytes: imageBytes,
+        imageName: imageName,
       );
       return true;
     } catch (e) {

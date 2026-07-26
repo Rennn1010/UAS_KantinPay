@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +14,8 @@ class QrisSettingScreen extends StatefulWidget {
 }
 
 class _QrisSettingScreenState extends State<QrisSettingScreen> {
-  File? _pickedImage;
+  Uint8List? _pickedImageBytes;
+  String? _pickedImageName;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -31,12 +32,16 @@ class _QrisSettingScreenState extends State<QrisSettingScreen> {
       imageQuality: 85,
     );
     if (picked != null) {
-      setState(() => _pickedImage = File(picked.path));
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _pickedImageBytes = bytes;
+        _pickedImageName = picked.name;
+      });
     }
   }
 
   Future<void> _saveQris() async {
-    if (_pickedImage == null) {
+    if (_pickedImageBytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pilih gambar QRIS terlebih dahulu')),
       );
@@ -46,13 +51,17 @@ class _QrisSettingScreenState extends State<QrisSettingScreen> {
     final provider = context.read<SellerQrisProvider>();
     final success = await provider.uploadQris(
       sellerId: widget.sellerId,
-      imageFile: _pickedImage!,
+      imageBytes: _pickedImageBytes!,
+      imageName: _pickedImageName!,
     );
 
     if (!mounted) return;
 
     if (success) {
-      setState(() => _pickedImage = null);
+      setState(() {
+        _pickedImageBytes = null;
+        _pickedImageName = null;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('QRIS berhasil disimpan')),
       );
@@ -91,10 +100,13 @@ class _QrisSettingScreenState extends State<QrisSettingScreen> {
                     border: Border.all(color: Colors.grey.shade300),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: _pickedImage != null
+                  child: _pickedImageBytes != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.file(_pickedImage!, fit: BoxFit.cover),
+                          child: Image.memory(
+                            _pickedImageBytes!,
+                            fit: BoxFit.cover,
+                          ),
                         )
                       : (currentImageUrl != null
                           ? ClipRRect(

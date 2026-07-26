@@ -51,9 +51,28 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
     }
   }
 
+  bool _categoriesLoading = true;
+  String? _categoriesError;
+
   Future<void> _loadCategories() async {
-    final categories = await _menuService.getCategories();
-    if (mounted) setState(() => _categories = categories);
+    setState(() {
+      _categoriesLoading = true;
+      _categoriesError = null;
+    });
+    try {
+      final categories = await _menuService.getCategories();
+      if (!mounted) return;
+      setState(() {
+        _categories = categories;
+        _categoriesLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _categoriesError = 'Gagal memuat kategori: $e';
+        _categoriesLoading = false;
+      });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -189,21 +208,50 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                             : null,
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedCategoryId,
-                decoration: const InputDecoration(labelText: 'Kategori'),
-                items:
-                    _categories
-                        .map(
-                          (cat) => DropdownMenuItem(
-                            value: cat.id,
-                            child: Text(cat.name),
-                          ),
-                        )
-                        .toList(),
-                onChanged:
-                    (value) => setState(() => _selectedCategoryId = value),
-              ),
+              if (_categoriesLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: LinearProgressIndicator(),
+                )
+              else if (_categoriesError != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _categoriesError!,
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                    TextButton(
+                      onPressed: _loadCategories,
+                      child: const Text('Coba lagi'),
+                    ),
+                  ],
+                )
+              else if (_categories.isEmpty)
+                const Text(
+                  'Belum ada kategori. Tambahkan kategori dulu di Supabase.',
+                  style: TextStyle(color: Colors.orange, fontSize: 12),
+                )
+              else
+                DropdownButtonFormField<String>(
+                  value: _selectedCategoryId,
+                  decoration: const InputDecoration(labelText: 'Kategori'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.normal,
+                    color: Colors.black87,
+                  ),
+                  items:
+                      _categories
+                          .map(
+                            (cat) => DropdownMenuItem(
+                              value: cat.id,
+                              child: Text(cat.name),
+                            ),
+                          )
+                          .toList(),
+                  onChanged:
+                      (value) => setState(() => _selectedCategoryId = value),
+                ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,

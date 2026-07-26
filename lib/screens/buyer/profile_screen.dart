@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +22,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final ImagePicker _picker = ImagePicker();
   final ProfileService _profileService = ProfileService();
 
-  File? _pickedImage;
+  Uint8List? _pickedImageBytes;
+  String? _pickedImageName;
   bool _isSaving = false;
   bool _isEditing = false;
 
@@ -47,7 +48,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       imageQuality: 85,
     );
     if (picked != null) {
-      setState(() => _pickedImage = File(picked.path));
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _pickedImageBytes = bytes;
+        _pickedImageName = picked.name;
+      });
     }
   }
 
@@ -59,10 +64,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final userId = authProvider.currentUser!.id;
 
     String? uploadedImageUrl;
-    if (_pickedImage != null) {
+    if (_pickedImageBytes != null && _pickedImageName != null) {
       uploadedImageUrl = await _profileService.uploadProfileImage(
         userId,
-        _pickedImage!,
+        _pickedImageBytes!,
+        _pickedImageName!,
       );
     }
 
@@ -77,7 +83,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _isSaving = false;
       if (success) {
         _isEditing = false;
-        _pickedImage = null;
+        _pickedImageBytes = null;
+        _pickedImageName = null;
       }
     });
 
@@ -155,14 +162,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       radius: 56,
                       backgroundColor: Colors.grey.shade200,
                       backgroundImage:
-                          _pickedImage != null
-                              ? FileImage(_pickedImage!)
+                          _pickedImageBytes != null
+                              ? MemoryImage(_pickedImageBytes!)
+                                  as ImageProvider
                               : (user.profileImageUrl != null
                                   ? NetworkImage(user.profileImageUrl!)
                                       as ImageProvider
                                   : null),
                       child:
-                          _pickedImage == null && user.profileImageUrl == null
+                          _pickedImageBytes == null &&
+                                  user.profileImageUrl == null
                               ? const Icon(
                                 Icons.person,
                                 size: 56,
@@ -254,7 +263,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ? null
                           : () => setState(() {
                             _isEditing = false;
-                            _pickedImage = null;
+                            _pickedImageBytes = null;
+                            _pickedImageName = null;
                             _nameController.text = user.fullName;
                             _phoneController.text = user.phone ?? '';
                           }),

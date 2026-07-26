@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Service khusus untuk upload foto profil ke storage.
@@ -8,15 +8,40 @@ class ProfileService {
   final SupabaseClient _client = Supabase.instance.client;
   static const String _bucket = 'profile-images';
 
-  Future<String> uploadProfileImage(String userId, File imageFile) async {
-    final fileExt = imageFile.path.split('.').last;
+  String _contentTypeFor(String ext) {
+    switch (ext.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      default:
+        return 'application/octet-stream';
+    }
+  }
+
+  /// Upload lewat bytes (uploadBinary), bukan File, supaya jalan di
+  /// Flutter Web (dart:io File tidak tersedia di web).
+  Future<String> uploadProfileImage(
+    String userId,
+    Uint8List imageBytes,
+    String originalFileName,
+  ) async {
+    final fileExt = originalFileName.split('.').last;
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
     final storagePath = '$userId/$fileName';
 
-    await _client.storage.from(_bucket).upload(
+    await _client.storage.from(_bucket).uploadBinary(
           storagePath,
-          imageFile,
-          fileOptions: const FileOptions(upsert: true),
+          imageBytes,
+          fileOptions: FileOptions(
+            upsert: true,
+            contentType: _contentTypeFor(fileExt),
+          ),
         );
 
     return _client.storage.from(_bucket).getPublicUrl(storagePath);
